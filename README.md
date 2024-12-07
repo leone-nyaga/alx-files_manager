@@ -66,7 +66,7 @@ RedisClient should have:
 
 After the class definition, create and export an instance of RedisClient called redisClient.
 
-```
+```bash
 bob@dylan:~$ cat main.js
 import redisClient from './utils/redis';
 
