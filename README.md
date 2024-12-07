@@ -53,6 +53,7 @@ At the end of this project, you are expected to be able to explain to anyone, wi
 # Tasks
 
 0. **Redis utils**
+
 Inside the folder utils, create a file redis.js that contains the class RedisClient.
 
 RedisClient should have:
