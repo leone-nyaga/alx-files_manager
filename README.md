@@ -89,3 +89,8 @@ null
 null
 bob@dylan:~$ 
 ```
+
+Repo:
++ GitHub repository: **alx-files_manager**
++  File: **utils/redis.js**
+
