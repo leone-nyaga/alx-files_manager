@@ -15,3 +15,18 @@ You will be guided step by step for building it, but you have some freedoms of i
 Of course, this kind of service already exists in the real life - it’s a learning purpose to assemble each piece and build a full product.
 
 Enjoy!
+
+## Resources
+
+Read or watch:
+
++ [Node js getting started](https://nodejs.org/en/learn/getting-started/introduction-to-nodejs)
++ [Process API Docs](https://node.readthedocs.io/en/latest/api/process/)
++ [Express Getting Started](https://expressjs.com/en/starter/installing.html)
++ [mocha documentation](https://mochajs.org/)
++ [Nodemon documentation](https://github.com/remy/nodemon#nodemon)
++ [MongoDB](https://github.com/mongodb/node-mongodb-native)
++ [Bull](https://github.com/OptimalBits/bull)
++ [Image thumbnail](https://www.npmjs.com/package/image-thumbnail)
++ [Mime-Types](https://www.npmjs.com/package/mime-types)
++ [Redis](https://github.com/redis/node-redis)
