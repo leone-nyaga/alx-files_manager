@@ -589,4 +589,4 @@ bob@dylan:~$
 Repo:
 
 + GitHub repository: **alx-files_manager**
-    File: **utils/**, **controllers/FilesController.js**, **worker.js**
++ File: **utils/**, **controllers/FilesController.js**, **worker.js**
