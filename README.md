@@ -52,7 +52,7 @@ At the end of this project, you are expected to be able to explain to anyone, wi
 
 # Tasks
 
-0. **Redis utils**
+## 0. Redis utils
 
 Inside the folder utils, create a file redis.js that contains the class RedisClient.
 
@@ -94,7 +94,7 @@ Repo:
 + GitHub repository: **alx-files_manager**
 +  File: **utils/redis.js**
 
-1. **MongoDB utils**
+## 1. MongoDB utils
 
 Inside the folder utils, create a file db.js that contains the class DBClient.
 
@@ -159,7 +159,7 @@ Repo:
 + File: **utils/db.js**
 
 
-2. **First API**
+## 2. First API
 
 Inside **server.js**, create the Express server:
 
@@ -203,7 +203,7 @@ Repo:
 + File: **server.js**, **routes/index.js**, **controllers/AppController.js**
 
 
-3. **Create a new user**
+## 3. **Create a new user**
 
 Now that we have a simple API, it’s time to add users to our database.
 
