@@ -246,4 +246,155 @@ Repo:
 + GitHub repository: **alx-files_manager**
 + File: **utils/**, **routes/index.js**, **controllers/UsersController.js**
 
+## 4. Authenticate a user
+
+In the file **routes/index.js**, add 3 new endpoints:
+
++ **GET /connect** => **AuthController.getConnect**
++ **GET /disconnect** => **AuthController.getDisconnect**
++ **GET /users/me** => **UserController.getMe**
+
+Inside **controllers**, add a file **AuthController.js** that contains new endpoints:
+
+**GET /connect** should sign-in the user by generating a new authentication token:
+
++ By using the header **Authorization** and the technique of the Basic auth (Base64 of the **<email>:<password>**), find the user associate to this email and with this password (reminder: we are storing the SHA1 of the password)
++ If no user has been found, return an error **Unauthorized** with a status code 401
++ Otherwise:
+  + Generate a random string (**using uuidv4**) as token
+  + Create a key: **auth_<token>**
+  + Use this key for storing in Redis (by using the **redisClient** create previously) the user ID for 24 hours
+  + Return this token: **{ "token": "155342df-2399-41da-9e8c-458b6ac52a0c" }** with a status code 200
+
+Now, we have a way to identify a user, create a token (= avoid to store the password on any front-end) and use this token for 24h to access to the API!
+
+Every authenticated endpoints of our API will look at this token inside the header **X-Token**.
+
+**GET /disconnect** should sign-out the user based on the token:
+
++ Retrieve the user based on the token:
+  + If not found, return an error **Unauthorized** with a status code 401
+  + Otherwise, delete the token in Redis and return nothing with a status code 204
+
+Inside the file **controllers/UsersController.js** add a new endpoint:
+
+**GET /users/me** should retrieve the user base on the token used:
+
++ Retrieve the user based on the token:
+  + If not found, return an error **Unauthorized** with a status code 401
+  + Otherwise, return the user object (**email** and **id** only)
+
+```bash
+bob@dylan:~$ curl 0.0.0.0:5000/connect -H "Authorization: Basic Ym9iQGR5bGFuLmNvbTp0b3RvMTIzNCE=" ; echo ""
+{"token":"031bffac-3edc-4e51-aaae-1c121317da8a"}
+bob@dylan:~$ 
+bob@dylan:~$ curl 0.0.0.0:5000/users/me -H "X-Token: 031bffac-3edc-4e51-aaae-1c121317da8a" ; echo ""
+{"id":"5f1e7cda04a394508232559d","email":"bob@dylan.com"}
+bob@dylan:~$ 
+bob@dylan:~$ curl 0.0.0.0:5000/disconnect -H "X-Token: 031bffac-3edc-4e51-aaae-1c121317da8a" ; echo ""
+
+bob@dylan:~$ curl 0.0.0.0:5000/users/me -H "X-Token: 031bffac-3edc-4e51-aaae-1c121317da8a" ; echo ""
+{"error":"Unauthorized"}
+bob@dylan:~$ 
+```
+
+Repo:
+
++ GitHub repository: **alx-files_manager**
++ File: **utils/**, **routes/index.js**, **controllers/UsersController.js**, **controllers/AuthController.js**
+
+## 5. First file
+
+In the file routes/index.js, add a new endpoint:
+
++ **POST /files** => **FilesController.postUpload**
+
+Inside **controllers**, add a file **FilesController.js** that contains the new endpoint:
+
+**POST /files** should create a new file in DB and in disk:
+
++ Retrieve the user based on the token:
+  + If not found, return an error **Unauthorized** with a status code 401
++ To create a file, you must specify:
+   + **name**: as filename
+   + **type**: either **folder**, **file** or **image**
+   + **parentId**: (optional) as ID of the parent (default: 0 -> the root)
+   + **isPublic**: (optional) as boolean to define if the file is public or not (default: false)
+   + **data**: (only for **type=file|image**) as Base64 of the file content
++ If the **name** is missing, return an error **Missing name** with a status code 400
++ If the **type** is missing or not part of the list of accepted type, return an error **Missing type** with a status code 400
++ If the **data** is missing and **type != folder**, return an error **Missing data** with a status code 400
++ If the **parentId** is set:
+  + If no file is present in DB for this **parentId**, return an error **Parent not found** with a status code 400
+  + If the file present in DB for this **parentId** is not of type **folder**, return an error **Parent is not a folder** with a status code 400
++ The user ID should be added to the document saved in DB - as owner of a file
++ If the type is **folder**, add the new file document in the DB and return the new file with a status code 201
++ Otherwise:
+  + All file will be stored locally in a folder (to create automatically if not present):
+    + The relative path of this folder is given by the environment variable **FOLDER_PATH**
+    + If this variable is not present or empty, use **/tmp/files_manager** as storing folder path
+  + Create a local path in the storing folder with filename a UUID
+  + Store the file in clear (reminder: **data** contains the Base64 of the file) in this local path
+  + Add the new file document in the collection **files** with these attributes:
+    + **userId**: ID of the owner document (owner from the authentication)
+    + **name**: same as the value received
+    + **type**: same as the value received
+    + **isPublic**: same as the value received
+    + **parentId**: same as the value received - if not present: 0
+    + **localPath**: for a **type=file|image**, the absolute path to the file save in local
+  + Return the new file with a status code 201
+
+```bash
+bob@dylan:~$ curl 0.0.0.0:5000/connect -H "Authorization: Basic Ym9iQGR5bGFuLmNvbTp0b3RvMTIzNCE=" ; echo ""
+{"token":"f21fb953-16f9-46ed-8d9c-84c6450ec80f"}
+bob@dylan:~$ 
+bob@dylan:~$ curl -XPOST 0.0.0.0:5000/files -H "X-Token: f21fb953-16f9-46ed-8d9c-84c6450ec80f" -H "Content-Type: application/json" -d '{ "name": "myText.txt", "type": "file", "data": "SGVsbG8gV2Vic3RhY2shCg==" }' ; echo ""
+{"id":"5f1e879ec7ba06511e683b22","userId":"5f1e7cda04a394508232559d","name":"myText.txt","type":"file","isPublic":false,"parentId":0}
+bob@dylan:~$
+bob@dylan:~$ ls /tmp/files_manager/
+2a1f4fc3-687b-491a-a3d2-5808a02942c9
+bob@dylan:~$
+bob@dylan:~$ cat /tmp/files_manager/2a1f4fc3-687b-491a-a3d2-5808a02942c9 
+Hello Webstack!
+bob@dylan:~$
+bob@dylan:~$ curl -XPOST 0.0.0.0:5000/files -H "X-Token: f21fb953-16f9-46ed-8d9c-84c6450ec80f" -H "Content-Type: application/json" -d '{ "name": "images", "type": "folder" }' ; echo ""
+{"id":"5f1e881cc7ba06511e683b23","userId":"5f1e7cda04a394508232559d","name":"images","type":"folder","isPublic":false,"parentId":0}
+bob@dylan:~$
+bob@dylan:~$ cat image_upload.py
+import base64
+import requests
+import sys
+
+file_path = sys.argv[1]
+file_name = file_path.split('/')[-1]
+
+file_encoded = None
+with open(file_path, "rb") as image_file:
+    file_encoded = base64.b64encode(image_file.read()).decode('utf-8')
+
+r_json = { 'name': file_name, 'type': 'image', 'isPublic': True, 'data': file_encoded, 'parentId': sys.argv[3] }
+r_headers = { 'X-Token': sys.argv[2] }
+
+r = requests.post("http://0.0.0.0:5000/files", json=r_json, headers=r_headers)
+print(r.json())
+
+bob@dylan:~$
+bob@dylan:~$ python image_upload.py image.png f21fb953-16f9-46ed-8d9c-84c6450ec80f 5f1e881cc7ba06511e683b23
+{'id': '5f1e8896c7ba06511e683b25', 'userId': '5f1e7cda04a394508232559d', 'name': 'image.png', 'type': 'image', 'isPublic': True, 'parentId': '5f1e881cc7ba06511e683b23'}
+bob@dylan:~$
+bob@dylan:~$ echo 'db.files.find()' | mongo files_manager
+{ "_id" : ObjectId("5f1e881cc7ba06511e683b23"), "userId" : ObjectId("5f1e7cda04a394508232559d"), "name" : "images", "type" : "folder", "parentId" : "0" }
+{ "_id" : ObjectId("5f1e879ec7ba06511e683b22"), "userId" : ObjectId("5f1e7cda04a394508232559d"), "name" : "myText.txt", "type" : "file", "parentId" : "0", "isPublic" : false, "localPath" : "/tmp/files_manager/2a1f4fc3-687b-491a-a3d2-5808a02942c9" }
+{ "_id" : ObjectId("5f1e8896c7ba06511e683b25"), "userId" : ObjectId("5f1e7cda04a394508232559d"), "name" : "image.png", "type" : "image", "parentId" : ObjectId("5f1e881cc7ba06511e683b23"), "isPublic" : true, "localPath" : "/tmp/files_manager/51997b88-5c42-42c2-901e-e7f4e71bdc47" }
+bob@dylan:~$
+bob@dylan:~$ ls /tmp/files_manager/
+2a1f4fc3-687b-491a-a3d2-5808a02942c9   51997b88-5c42-42c2-901e-e7f4e71bdc47
+bob@dylan:~$
+```
+
+Repo:
+
++ GitHub repository: **alx-files_manager**
++ File: **utils/**, **routes/index.js**, **controllers/FilesController.js**
+
 
